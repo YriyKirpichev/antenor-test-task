@@ -1,0 +1,16 @@
+frontend
+
+.env
+.env.*
+
+.venv
+.git
+.gitignore
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+*.egg-info
+
+Description.md
+TestTask.md

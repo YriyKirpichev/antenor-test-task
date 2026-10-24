@@ -29,10 +29,36 @@ class Settings(BaseSettings):
     POSTGIS_DB: str = "app"
 
     DB_ECHO: bool = False
-    DB_POOL_SIZE: int = 10
-    DB_MAX_OVERFLOW: int = 20
+    DB_POOL_SIZE: int = 5
+    DB_MAX_OVERFLOW: int = 5
     DB_POOL_TIMEOUT: int = 30
     DB_POOL_RECYCLE: int = 1800
+
+    WORKER_DB_POOL_SIZE: int = 3
+
+    ALERT_MODE: Literal["enter", "every_report"] = "enter"
+    ALERT_COOLDOWN_S: float = 60.0
+
+    GEOFENCE_BATCH_SIZE: int = 5_000
+    GEOFENCE_BLOCK_MS: int = 1_000
+    GEOFENCE_REPORT_INTERVAL_S: float = 10.0
+
+    HISTORY_BATCH_SIZE: int = 5_000
+    HISTORY_BLOCK_MS: int = 1_000
+
+    HISTORY_PARTITION_AHEAD_DAYS: int = 2
+    HISTORY_REPORT_INTERVAL_S: float = 10.0
+
+    FD_SOFT_LIMIT: int = 65_536
+
+    INGEST_BUFFER_MAXSIZE: int = 50_000
+    INGEST_FLUSH_INTERVAL_MS: int = 150
+
+    WS_CLIENT_QUEUE_MAXSIZE: int = 100
+
+    MAP_BROADCAST_INTERVAL_MS: int = 1000
+
+    INGEST_STREAM_MAXLEN: int = 200_000
 
     REDIS_HOST: str = "localhost"
     REDIS_PORT: int = 6379

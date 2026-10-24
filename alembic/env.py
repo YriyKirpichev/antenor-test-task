@@ -2,6 +2,7 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
+from geoalchemy2 import alembic_helpers
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
@@ -18,6 +19,23 @@ config.set_main_option("sqlalchemy.url", str(settings.database_url))
 
 target_metadata = Base.metadata
 
+EXCLUDED_SCHEMAS = frozenset({"tiger", "tiger_data", "topology"})
+
+
+def include_object(
+    obj: object, name: str | None, type_: str, reflected: bool, compare_to: object
+) -> bool:
+    if getattr(obj, "schema", None) in EXCLUDED_SCHEMAS:
+        return False
+    if reflected:
+        if type_ == "table" and name not in target_metadata.tables:
+            return False
+        table = getattr(obj, "table", None)
+        if type_ == "index" and table is not None:
+            if table.name not in target_metadata.tables:
+                return False
+    return alembic_helpers.include_object(obj, name, type_, reflected, compare_to)
+
 
 def _configure(connection: Connection | None = None, url: str | None = None) -> None:
     context.configure(
@@ -28,6 +46,8 @@ def _configure(connection: Connection | None = None, url: str | None = None) -> 
         compare_type=True,
         compare_server_default=True,
         include_schemas=False,
+        include_object=include_object,
+        render_item=alembic_helpers.render_item,
     )
 
 

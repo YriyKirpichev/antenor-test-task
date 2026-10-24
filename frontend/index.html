@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live map</title>
+  </head>
+  <body>
+    <div id="app">
+      <aside class="sidebar">
+        <section>
+          <h1>Live map</h1>
+          <label for="user-id">User</label>
+          <div class="row">
+            <input id="user-id" value="u1" autocomplete="off" />
+            <button id="connect">Connect</button>
+          </div>
+          <p class="hint">
+            Mock auth: this id is the <code>X-User-Id</code> header for REST and
+            <code>?user_id=</code> on the socket. Open this page twice with the
+            same id to see one user with two sessions.
+          </p>
+          <p id="status" class="status closed">disconnected</p>
+        </section>
+
+        <section>
+          <h2>Devices</h2>
+          <dl class="stats">
+            <dt>in snapshot</dt><dd id="stat-count">&mdash;</dd>
+            <dt>drawn</dt><dd id="stat-drawn">&mdash;</dd>
+            <dt>last tick</dt><dd id="stat-age">&mdash;</dd>
+            <dt>map scale</dt><dd id="stat-scale">&mdash;</dd>
+          </dl>
+          <label class="check">
+            <input type="checkbox" id="viewport-filter" />
+            filter by viewport (server-side)
+          </label>
+          <button id="fit" class="wide">Fit map to devices</button>
+          <p id="truncated" class="warn hidden"></p>
+        </section>
+
+        <section>
+          <h2>New geozone</h2>
+          <label for="zone-name">Name</label>
+          <input id="zone-name" value="Zone 1" autocomplete="off" />
+          <label for="zone-radius">Radius, meters</label>
+          <input id="zone-radius" type="number" value="2000" min="1" />
+          <button id="pick" class="wide">Pick center on map</button>
+          <p id="picked" class="hint">No center picked yet.</p>
+          <button id="create" class="wide primary" disabled>Create zone</button>
+        </section>
+
+        <section>
+          <h2>Geozones <span id="zone-count" class="badge">0</span></h2>
+          <ul id="zones" class="list"></ul>
+          <button id="fit-zones" class="wide">Fit map to zones</button>
+          <p id="zone-hint" class="warn hidden"></p>
+        </section>
+
+        <section>
+          <h2>Alerts <span id="alert-count" class="badge">0</span></h2>
+          <ul id="alerts" class="list"></ul>
+          <p class="hint">
+            Alerts arrive over the same socket once the geofence worker
+            publishes them; missed ones are backfilled from
+            <code>/notifications</code> on connect.
+          </p>
+        </section>
+
+        <p id="error" class="error hidden"></p>
+      </aside>
+      <main id="map"></main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

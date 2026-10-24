@@ -7,11 +7,15 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
 from app.api.v1.endpoints import health
+from app.api.ws import client as ws_client
+from app.api.ws import devices as ws_devices
 from app.api.v1.router import api_router
 from app.core.config import Settings, get_settings
 from app.core.exceptions import AppError
+from app.core.limits import ensure_fd_limit
 from app.core.logging import configure_logging, request_id_ctx
 from app.core.resources import build_resources
+from app.services.runtime import build_services
 from app.middleware.request_context import RequestContextMiddleware
 
 logger = logging.getLogger(__name__)
@@ -24,6 +28,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         configure_logging()
         logger.info("Starting %s (env=%s)", settings.PROJECT_NAME, settings.ENV)
+        ensure_fd_limit(settings.FD_SOFT_LIMIT)
 
         async with build_resources(settings) as resources:
             app.state.resources = resources
@@ -33,7 +38,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             await resources.redis.ping()
             logger.info("Dependencies verified")
 
-            yield
+            async with build_services(resources, settings) as services:
+                app.state.services = services
+                yield
 
         logger.info("Shutdown complete")
 
@@ -49,6 +56,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.add_middleware(RequestContextMiddleware)
 
     app.include_router(health.router)
+    app.include_router(ws_devices.router)
+    app.include_router(ws_client.router)
     app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 
     @app.exception_handler(AppError)

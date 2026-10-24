@@ -1,4 +1,16 @@
 services:
+  migrate:
+    container_name: migrate
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["alembic", "upgrade", "head"]
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   api:
     container_name: api
     build:
@@ -6,6 +18,8 @@ services:
       dockerfile: Dockerfile
     env_file: .env
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
       redis:
@@ -13,6 +27,37 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  worker:
+    container_name: worker
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["python", "-m", "app.worker.main"]
+    env_file: .env
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    container_name: web
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    depends_on:
+      - api
+    restart: unless-stopped
+    ports:
+      - "8080:80"
 
   db:
     image: postgis/postgis:18-3.6
@@ -25,7 +70,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - postgisdata:/var/lib/postgresql
+      - postgisdata2:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGIS_USER} -d ${POSTGIS_DB}"]
       interval: 5s
@@ -42,4 +87,4 @@ services:
       retries: 10
 
 volumes:
-  postgisdata:
+  postgisdata2:
